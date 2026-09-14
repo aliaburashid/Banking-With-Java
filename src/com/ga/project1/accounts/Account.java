@@ -25,10 +25,6 @@ public class Account {
 
     public double deposit(double amount) {
         accountBalance = accountBalance + amount;
-        System.out.println("------------------------------------------------");
-        System.out.println("Amount of $" + amount + " successfully deposited!");
-        System.out.println("------------------------------------------------");
-
         // reactivate account once negative balance and fees resolved
         if (!active && accountBalance >= 0 ) {
             active = true;
@@ -99,6 +95,7 @@ public class Account {
     public String getIban() {
         return iban;
     }
+
     // due to private balance, customer can't directly access it.
     public double getAccountBalance() {
         return accountBalance;
@@ -107,4 +104,5 @@ public class Account {
     public String getAccountType() {
         return accountType;
     }
+
 }

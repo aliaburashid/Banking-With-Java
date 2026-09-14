@@ -71,6 +71,7 @@ public class WelcomingMenu {
                         System.out.println("\n" + Account.redBold + "Security Alert:" + Account.textReset + " You are using a temporary password. You must change your password");
                         changeTempPassword(user);
                     }
+                    customerMenu(user);
 
                 } else if (user instanceof Banker) {
                     System.out.println("Role: Banker");
@@ -251,6 +252,84 @@ public class WelcomingMenu {
         if (bankerChoice== 1) {
             addNewCustomer();
         }
+    }
+
+
+    public void viewAccounts(Customer customer) {
+
+        System.out.println("\n==================== Your Accounts ====================");
+
+        // for every account belonging to this customer,put that account temporarily into the variable account and print its info
+        for (Account account : customer.getAccounts()) {
+            System.out.println("Account Type: " + account.getAccountType());
+            System.out.println("IBAN: " + account.getIban());
+            System.out.println("Balance: $" + account.getAccountBalance());
+            System.out.println("--------------------------------");
+        }
+    }
+
+    public void depositMoney(Customer customer) {
+        System.out.println("\n==================== Deposit Money ====================");
+
+        // show the customers accounts
+        viewAccounts(customer);
+
+        // ask which account the customer wants to deposit into
+        System.out.print("Enter the IBAN of the account you want to deposit into: ");
+        String iban = scanner.next();
+
+        Optional<Account> accountIsFound = customer.getAccount(iban);
+
+        if (accountIsFound.isPresent()) {
+            Account account = accountIsFound.get();
+
+            System.out.print("Enter amount to deposit: $");
+            double amount = scanner.nextDouble();
+
+            // save the balance before depositing
+            double previousBalance = account.getAccountBalance();
+
+            account.deposit(amount); // deposit method in account
+
+            // save the customer so the new balance is saved
+            fileHandling.saveUser(customer);
+
+            System.out.println("\n-------------------------------------------------------");
+            System.out.println(Account.greenBold + "Deposit Successful!" + Account.textReset);
+            System.out.println("-------------------------------------------------------");
+            System.out.println("Account:          " + account.getAccountType());
+            System.out.println("Previous Balance: $" + previousBalance);
+            System.out.println("Deposit:          +$" + amount);
+            System.out.println("-------------------------------------------------------");
+            System.out.println("New Balance:      $" + account.getAccountBalance());
+            System.out.println("-------------------------------------------------------");
+
+        } else {
+            System.out.println(Account.redBold + "Account not found." + Account.textReset);
+        }
+    }
+
+    public void customerMenu(User user) {
+        System.out.println("\n==================== Customer Menu ====================");
+        System.out.println("Welcome " + user.getName());
+
+        System.out.println("1. View Accounts");
+        System.out.println("2. Deposit");
+        System.out.println("3. Withdraw");
+        System.out.println("4. Transfer");
+        System.out.println("5. Transaction History");
+        System.out.println("6. Logout");
+
+        System.out.println("Choose an Option: ");
+
+        int choice = scanner.nextInt();
+
+        if (choice == 1) {
+            viewAccounts((Customer) user);
+        } else if (choice == 2) {
+            depositMoney((Customer) user);
+        }
+
     }
 
 }
