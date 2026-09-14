@@ -78,10 +78,10 @@ public class WelcomingMenu {
                     bankerMenu(banker);
                 }
             } else {
-                System.out.println("Incorrect Password :(");
+                System.out.println("\n" + Account.redBold + " Incorrect Password :(" + Account.textReset);
             }
         } else {
-            System.out.println("User not found!");
+            System.out.println("\n" + Account.redBold + " User not found!"  + Account.textReset);
         }
     }
 

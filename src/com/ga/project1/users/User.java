@@ -37,8 +37,12 @@ public abstract class User {
     }
 
     public void setTemporaryPassword(boolean temporaryPassword) {
+
         this.temporaryPassword = temporaryPassword;
     }
 
+    public void setHashedPassword(String hashedPassword) {
+        this.hashedPassword = hashedPassword;
+    }
 }
 
