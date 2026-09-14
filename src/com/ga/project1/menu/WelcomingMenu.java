@@ -69,6 +69,7 @@ public class WelcomingMenu {
 
                     if (user.isTemporaryPassword()) {
                         System.out.println("\n" + Account.redBold + "Security Alert:" + Account.textReset + " You are using a temporary password. You must change your password");
+                        changeTempPassword(user);
                     }
 
                 } else if (user instanceof Banker) {
@@ -212,6 +213,28 @@ public class WelcomingMenu {
         System.out.println("Customer ID: " + customerId);
         System.out.println("Temporary Password: " + temporaryPassword);
     }
+
+    public void changeTempPassword (User user) {
+        scanner.nextLine();
+
+        System.out.println("\n==================== Change Password ====================");
+        System.out.println("Create a new Password: ");
+
+        String newPassword = scanner.nextLine();
+
+        // hash the customer's password before storing it
+        String newHashedPassword = authentication.hashPassword(newPassword);
+
+        // set the temporary hashed password with the new hashed password
+        user.setHashedPassword(newHashedPassword);
+
+        // the customer now has their own password
+        user.setTemporaryPassword(false);
+
+        // save the new customer new password
+        fileHandling.saveUser(user);
+    }
+
 
     public void bankerMenu(Banker banker) {
         System.out.println("\n==================== Banker Menu ====================");
