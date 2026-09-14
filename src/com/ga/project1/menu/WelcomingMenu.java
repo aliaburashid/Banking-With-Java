@@ -66,6 +66,11 @@ public class WelcomingMenu {
                 //check which type of user is logged in
                 if (user instanceof Customer) {
                     System.out.println("Role: Customer");
+
+                    if (user.isTemporaryPassword()) {
+                        System.out.println("\n" + Account.redBold + "Security Alert:" + Account.textReset + " You are using a temporary password. You must change your password");
+                    }
+
                 } else if (user instanceof Banker) {
                     System.out.println("Role: Banker");
                     // convert the User Object into a Banker
@@ -116,6 +121,9 @@ public class WelcomingMenu {
 
         // create the new customer object
         Customer customer = new Customer(customerId, name, hashedPassword, email, address, phoneNumber);
+
+        // Customer sets up their own password so false
+        customer.setTemporaryPassword(false);
 
         // fictional Bahrain-style IBANs
         String checkingIban = "BH00ACME0000000000" + customerId.substring(1) + "1";
@@ -174,6 +182,9 @@ public class WelcomingMenu {
 
         // create the new customer object
         Customer customer = new Customer(customerId, name, hashedPassword, email, address, phoneNumber);
+
+        // if the banker created the customer with temporary password
+        customer.setTemporaryPassword(true);
 
         // fictional Bahrain-style IBANs
         String checkingIban = "BH00ACME0000000000" + customerId.substring(1) + "1";

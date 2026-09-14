@@ -1,0 +1,9 @@
+ID=C005
+Name=Shaikha
+Password=7a54f474243d0c88cb6935b7251c75ab71d8109846eb7f26803a9b24348f69e0
+Temporary Password=true
+Email=shaikha@gmail.com
+Address=Manama
+PhoneNumber=66557788
+Account=BH00ACME00000000000051,Checking,0.0
+Account=BH00ACME00000000000052,Saving,0.0

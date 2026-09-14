@@ -8,6 +8,7 @@ public abstract class User {
     private String hashedPassword;
     private int countOfFailedLoginAttempts;
     private LocalDate securityLockoutUntil;
+    private boolean temporaryPassword;
 
     public User(String id, String name, String hashedPassword) {
         this.id = id;
@@ -22,11 +23,22 @@ public abstract class User {
     }
 
     public String getName() {
+
         return name;
     }
 
     public String getHashedPassword() {
+
         return hashedPassword;
     }
+
+    public boolean isTemporaryPassword() {
+        return temporaryPassword;
+    }
+
+    public void setTemporaryPassword(boolean temporaryPassword) {
+        this.temporaryPassword = temporaryPassword;
+    }
+
 }
 

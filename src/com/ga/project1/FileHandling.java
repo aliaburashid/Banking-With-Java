@@ -70,6 +70,7 @@ public class FileHandling {
             writer.write("ID=" + user.getId() + "\n");
             writer.write("Name=" + user.getName() + "\n");
             writer.write("Password=" + user.getHashedPassword() + "\n");
+            writer.write("Temporary Password=" + user.isTemporaryPassword()+ "\n");
 
             // if the user is a Customer, save their personal details
             if (user instanceof Customer) {
@@ -124,6 +125,7 @@ public class FileHandling {
                         String customerId = "";
                         String name = "";
                         String hashedPassword = "";
+                        boolean temporaryPassword = false;
                         String email = "";
                         String address = "";
                         String phoneNumber = "";
@@ -151,6 +153,11 @@ public class FileHandling {
                             } else if (line.startsWith("Password=")) {
 
                                 hashedPassword = line.substring(9);
+
+                                // convert the String "true" or "false" into a boolean
+                            } else if (line.startsWith("Temporary Password=")){
+                                // true is string so we need boolean true
+                                temporaryPassword = Boolean.parseBoolean(line.substring("Temporary Password=".length()));
 
                                 // check if the line contains the email
                             } else if (line.startsWith("Email=")) {
@@ -180,6 +187,7 @@ public class FileHandling {
 
                         // create a Customer object using the information that was read from the file
                         Customer customer = new Customer(customerId, name, hashedPassword, email, address, phoneNumber);
+                        customer.setTemporaryPassword(temporaryPassword);
 
                         // go through every account that was read from the file
                         for (String accountLine : accountLines) {
