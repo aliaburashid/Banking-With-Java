@@ -1,0 +1,8 @@
+ID=C004
+Name=Ahlam
+Password=29ce8154de5c5a78c179e47ea29124831e74a69716df3d7d742978a3ff55c313
+Email=ahlam@gmail.com
+Address=Oman
+PhoneNumber=07863456
+Account=BH00ACME00000000000041,Checking,0.0
+Account=BH00ACME00000000000042,Saving,0.0

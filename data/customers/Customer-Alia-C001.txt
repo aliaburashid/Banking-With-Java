@@ -1,0 +1,8 @@
+ID=C001
+Name=Alia
+Password=ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f
+Email=alia@email.com
+Address=Bahrain
+PhoneNumber=12345678
+Account=BH001,Checking,500.0
+Account=BH002,Savings,200.0

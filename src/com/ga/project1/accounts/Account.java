@@ -1,4 +1,4 @@
-package com.ga.project1;
+package com.ga.project1.accounts;
 
 public class Account {
     private String iban;
@@ -8,9 +8,9 @@ public class Account {
     private double overdraftFees;
     private boolean active;
     private static final double OVERDRAFT_FEE = 35.0;
-    public String textReset;
-    public String redBold;
-    public String greenBold;
+    public static String textReset = "\u001B[0m";
+    public static String redBold = "\u001B[1;31m";
+    public static String greenBold = "\u001B[1;32m";
 
 
     public Account(String accountIban, double accountBalance, String accountType) {
@@ -20,9 +20,6 @@ public class Account {
         overdraftCount = 0;
         overdraftFees = 0;
         this.active = true;
-        this.textReset = "\u001B[0m";
-        this.redBold = "\u001B[1;31m";
-        this.greenBold = "\u001B[1;32m";
     }
 
 
@@ -30,7 +27,6 @@ public class Account {
         accountBalance = accountBalance + amount;
         System.out.println("------------------------------------------------");
         System.out.println("Amount of $" + amount + " successfully deposited!");
-        System.out.println("Current balance: $" + accountBalance);
         System.out.println("------------------------------------------------");
 
         // reactivate account once negative balance and fees resolved
@@ -73,6 +69,7 @@ public class Account {
         } else {
             // if account balance < amount, overdraft happens
             accountBalance = accountBalance - amount;
+            accountBalance = accountBalance - OVERDRAFT_FEE;
             overdraftFees = overdraftFees + OVERDRAFT_FEE;
             overdraftCount++;
             System.out.println("Warning: Running on borrowed funds! A fee of $" + OVERDRAFT_FEE + " Has been applied.");
@@ -87,7 +84,27 @@ public class Account {
             }
         }
         return accountBalance;
+    }
 
-        }
+    public double transfer(Account destination, double amount) {
+        // take the money from this account
+        accountBalance = accountBalance - amount;
+        // put the money into this account
+        destination.accountBalance = destination.accountBalance + amount;
+        System.out.println("Amount of $" + amount + " successfully transferred!");
+        return accountBalance;
+    }
+
+    // due to private iban, customer can't directly access it.
+    public String getIban() {
+        return iban;
+    }
+    // due to private balance, customer can't directly access it.
+    public double getAccountBalance() {
+        return accountBalance;
+    }
+
+    public String getAccountType() {
+        return accountType;
     }
 }
