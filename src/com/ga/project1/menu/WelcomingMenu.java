@@ -356,6 +356,163 @@ public class WelcomingMenu {
         }
 
     }
+
+    public void transferMoney(Customer customer) {
+        System.out.println("\n==================== Transfer Money ====================");
+
+        System.out.println("1. Transfer Between My Accounts");
+        System.out.println("2. Transfer To Another Customer");
+        System.out.print("Choose an option: ");
+
+        int choice = scanner.nextInt();
+
+        if (choice == 1) {
+            System.out.println("\n==================== Transfer Between My Accounts ====================");
+
+            // show the customers checking and saving accounts
+            viewAccounts(customer);
+
+            // ask which account the money is coming from
+            System.out.print("Enter the IBAN to transfer FROM: ");
+            String sourceIban = scanner.next();
+
+            // ask which account the money is going to
+            System.out.print("Enter the IBAN to transfer TO: ");
+            String destinationIban = scanner.next();
+
+            // find both accounts using their IBANs
+            Optional<Account> sourceAccount = customer.getAccount(sourceIban);
+            Optional<Account> destinationAccount = customer.getAccount(destinationIban);
+
+            // validation: check if both accounts exist
+            if (sourceAccount.isPresent() && destinationAccount.isPresent()) {
+                Account fromAccount = sourceAccount.get();
+                Account toAccount = destinationAccount.get();
+
+                // amount to transfer
+                System.out.println("Enter amount to transfer: $");
+                double amount = scanner.nextDouble();
+
+                // save both balances before the transfer
+                double previousFromBalance = fromAccount.getAccountBalance();
+                double previousToBalance = toAccount.getAccountBalance();
+
+                // call the transfer method to transfer the money
+                fromAccount.transfer(toAccount, amount);
+
+                // only continue if the money was actually transferred
+                if (fromAccount.getAccountBalance() != previousFromBalance) {
+
+                    fileHandling.saveUser(customer);
+
+                    System.out.println("\n-------------------------------------------------------");
+                    System.out.println(Account.greenBold + "Transfer Successful!" + Account.textReset);
+                    System.out.println("-------------------------------------------------------");
+                    System.out.println("From Account:       " + fromAccount.getAccountType());
+                    System.out.println("To Account:         " + toAccount.getAccountType());
+                    System.out.println("Transfer Amount:    $" + amount);
+                    System.out.println("-------------------------------------------------------");
+
+                    System.out.println(fromAccount.getAccountType() + " Account:");
+                    System.out.println("Previous Balance:   $" + previousFromBalance);
+                    System.out.println("New Balance:        $" + fromAccount.getAccountBalance());
+
+                    System.out.println();
+
+                    System.out.println(toAccount.getAccountType() + " Account:");
+                    System.out.println("Previous Balance:   $" + previousToBalance);
+                    System.out.println("New Balance:        $" + toAccount.getAccountBalance());
+
+                    System.out.println("-------------------------------------------------------");
+                }
+
+            } else  {
+                System.out.println(Account.redBold + "One or both accounts were not found." + Account.textReset);
+            }
+        } else if (choice == 2) {
+            System.out.println("\n==================== Transfer To Another Customer ====================");
+
+            // show the logged in customer accounts
+            viewAccounts(customer);
+
+            // choose which account the money will come from
+            System.out.print("Enter the IBAN to transfer FROM: ");
+            String sourceIban = scanner.next();
+
+            // enter the customers id receiving the money
+            // by default its sending to checking ad we don't control the savings of someone
+            System.out.print("Enter the Customer ID you want to transfer to: ");
+            String destinationCustomerId = scanner.next();
+
+            // find the customer using their ID (search the files for ids so loadUser("C005")
+            Optional<User> destinationUser = fileHandling.loadUser(destinationCustomerId);
+
+            // if we find the id and that person is actually a Customer
+            if (destinationUser.isPresent() && destinationUser.get() instanceof Customer) {
+                // loadUser() returns a User, but I checked with instanceof that the object is actually a Customer.
+                // I cast it to Customer so I can access customer specific methods.
+                Customer destinationCustomer = (Customer) destinationUser.get();
+
+                // get all of the customers account
+                Optional<Account> checkingAccount = destinationCustomer.getAccounts()
+                        // let us search through them
+                        .stream()
+                        // only keep the account whose type is checking
+                        .filter(account -> account.getAccountType().equalsIgnoreCase("Checking"))
+                        // returns the first checking account it finds as an optional<Account>
+                        .findFirst();
+
+                // check: Did we actually find a Checking account?
+                if (checkingAccount.isPresent()) {
+                    // if so, get it out of the optional and store it as destinationAccount to transfer money into it
+                    Account destinationAccount = checkingAccount.get();
+                    // find which of my accounts i choose to transfer from
+                    Optional<Account> sourceAccount = customer.getAccount(sourceIban);
+
+                    if (sourceAccount.isPresent()) {
+                        // Get my account from the Optional so we can transfer money from it.
+                        Account fromAccount = sourceAccount.get();
+                        // ask how much money they want to transfer
+                        System.out.print("Enter amount to transfer: $");
+                        double amount = scanner.nextDouble();
+                        // save my balance before the transfer
+                        double previousBalance = fromAccount.getAccountBalance();
+                        // transfer money from my account to the other customers checking account
+                        fromAccount.transfer(destinationAccount, amount);
+
+
+                        // only continue if the money was actually transferred
+                        if (fromAccount.getAccountBalance() != previousBalance) {
+                            // save both customers because both account balances changed
+                            fileHandling.saveUser(customer);
+                            fileHandling.saveUser(destinationCustomer);
+
+                            System.out.println("\n-------------------------------------------------------");
+                            System.out.println(Account.greenBold + "Transfer Successful!" + Account.textReset);
+                            System.out.println("-------------------------------------------------------");
+                            System.out.println("From Account:       " + fromAccount.getAccountType());
+                            System.out.println("To Customer:        " + destinationCustomer.getName());
+                            System.out.println("Transfer Amount:    $" + amount);
+                            System.out.println("-------------------------------------------------------");
+                            System.out.println("Previous Balance:   $" + previousBalance);
+                            System.out.println("New Balance:        $" + fromAccount.getAccountBalance());
+                            System.out.println("-------------------------------------------------------");
+                        }
+
+                    } else {
+                        System.out.println(Account.redBold + "Your account was not found." + Account.textReset);
+                    }
+                } else {
+                    System.out.println(Account.redBold + "This customer does not have a Checking account." + Account.textReset);
+                }
+            } else {
+                System.out.println(Account.redBold + "Customer not found." + Account.textReset);
+            }
+
+
+        }
+    }
+
     public void customerMenu(User user) {
         System.out.println("\n==================== Customer Menu ====================");
         System.out.println("Welcome " + user.getName());
@@ -379,6 +536,9 @@ public class WelcomingMenu {
 
         } else if (choice == 3) {
             withdrawMoney((Customer) user);
+
+        } else if (choice == 4) {
+            transferMoney((Customer) user);
         }
 
     }

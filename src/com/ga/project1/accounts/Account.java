@@ -83,11 +83,29 @@ public class Account {
     }
 
     public double transfer(Account destination, double amount) {
-        // take the money from this account
-        accountBalance = accountBalance - amount;
-        // put the money into this account
-        destination.accountBalance = destination.accountBalance + amount;
-        System.out.println("Amount of $" + amount + " successfully transferred!");
+
+        // validation: prevent negative or 0 transfer amount
+        if (amount <= 0) {
+            System.out.println(redBold + "\nTransfer amount must be greater than $0." + textReset);
+            return accountBalance;
+        }
+
+        // validation: prevent transfers from a deactivated account
+        if (!active) {
+            System.out.println(redBold + "\nTRANSACTION CAN'T BE COMPLETED!" + "\nYour account is DEACTIVATED." + textReset);
+            return accountBalance;
+        }
+
+        // validation: check if there is enough money to transfer
+        if (amount > accountBalance) {
+            System.out.println(redBold + "\nTRANSACTION CAN'T BE COMPLETED!" + textReset + "\nYou do not have enough money to make this transfer.");
+            return accountBalance;
+        }
+
+        // withdraw from this account
+        withdraw(amount);
+        // deposit into the other account
+        destination.deposit(amount);
         return accountBalance;
     }
 

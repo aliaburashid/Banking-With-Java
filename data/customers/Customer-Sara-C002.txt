@@ -1,9 +1,9 @@
 ID=C002
 Name=Sara
 Password=3d404e188e86d2652c3d7b44eb016f292aeefb083897056816cc19f0873dabaa
+Temporary Password=false
 Email=sara@gmail.com
 Address=Manama
 PhoneNumber=33667788
-Account=BH00ACME00000000000021,Checking,0.0
-Account=BH00ACME00000000000022,Saving,0.0
-
+Account=BH00ACME00000000000021,Checking,100.0,0,0.0,true
+Account=BH00ACME00000000000022,Saving,0.0,0,0.0,true

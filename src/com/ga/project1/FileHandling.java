@@ -20,8 +20,6 @@ import com.ga.project1.users.Customer;
 import com.ga.project1.users.User;
 import com.ga.project1.accounts.Account;
 
-
-import javax.swing.*;
 import java.io.File; // deal with directory
 import java.io.FileWriter; // write text into a file
 import java.io.IOException; // error that can happen while working with files
