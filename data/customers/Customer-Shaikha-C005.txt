@@ -5,5 +5,5 @@ Temporary Password=false
 Email=shaikha@gmail.com
 Address=Manama
 PhoneNumber=66557788
-Account=BH00ACME00000000000051,Checking,1040.0
-Account=BH00ACME00000000000052,Saving,0.0
+Account=BH00ACME00000000000051,Checking,-45.0,2,70.0,false
+Account=BH00ACME00000000000052,Saving,0.0,0,0.0,true

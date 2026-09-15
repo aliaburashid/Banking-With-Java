@@ -83,7 +83,13 @@ public class FileHandling {
 
                 // Loop through all accounts that belong to the customer
                 for (Account account : customer.getAccounts()) {
-                    writer.write("Account=" + account.getIban() + "," + account.getAccountType() + ","  + account.getAccountBalance() + "\n");
+                    writer.write("Account=" + account.getIban()
+                            + "," + account.getAccountType()
+                            + "," + account.getAccountBalance()
+                            + "," + account.getOverdraftCount()
+                            + "," + account.getOverdraftFees()
+                            + "," + account.isActive()
+                            + "\n");
                 }
             }
 
@@ -205,12 +211,29 @@ public class FileHandling {
                             // convert it from a String into a double
                             double balance = Double.parseDouble(accountData[2]);
 
+                            // normal values for old customer files
+                            int overdraftCount = 0;
+                            double overdraftFees = 0.0;
+                            boolean active = true;
+
+                            // if overdraft information is saved, load it
+                            if (accountData.length == 6) {
+                                overdraftCount = Integer.parseInt(accountData[3]);
+                                overdraftFees = Double.parseDouble(accountData[4]);
+                                active = Boolean.parseBoolean(accountData[5]);
+                            }
+
                             // create an Account object using the saved information
                             Account account = new Account(
                                     iban,
                                     balance,
                                     accountType
                             );
+
+                            // restore the account overdraft information from the file
+                            account.setOverdraftCount(overdraftCount);
+                            account.setOverdraftFees(overdraftFees);
+                            account.setActive(active);
 
                             // add the account back to the customer
                             customer.addAccount(account);

@@ -309,6 +309,53 @@ public class WelcomingMenu {
         }
     }
 
+
+    public void withdrawMoney(Customer customer) {
+        System.out.println("\n==================== Withdraw Money ====================");
+
+        // show the customers accounts
+        viewAccounts(customer);
+
+        // ask which account the customer wants to withdraw from
+        System.out.print("Enter the IBAN of the account you want to withdraw from: ");
+        String iban = scanner.next();
+
+        Optional<Account> accountIsFound = customer.getAccount(iban);
+
+        if (accountIsFound.isPresent()) {
+
+            Account account = accountIsFound.get();
+
+            System.out.print("Enter amount to withdraw: $");
+            double amount = scanner.nextDouble();
+
+            // save balance before withdrawing
+            double previousBalance = account.getAccountBalance();
+
+            // use the withdrawal method already created in Account
+            account.withdraw(amount);
+
+            // save the updated account
+            fileHandling.saveUser(customer);
+
+            System.out.println("\n-------------------------------------------------------");
+            System.out.println(Account.greenBold + "Withdrawal Completed" + Account.textReset);
+            System.out.println("-------------------------------------------------------");
+            System.out.println("Account:          " + account.getAccountType());
+            System.out.println("Previous Balance: $" + previousBalance);
+            System.out.println("Withdrawal:       -$" + amount);
+            System.out.println("-------------------------------------------------------");
+            System.out.println("New Balance:      $" + account.getAccountBalance());
+            System.out.println("-------------------------------------------------------");
+
+        } else {
+
+            System.out.println(
+                    Account.redBold + "Account not found." + Account.textReset
+            );
+        }
+
+    }
     public void customerMenu(User user) {
         System.out.println("\n==================== Customer Menu ====================");
         System.out.println("Welcome " + user.getName());
@@ -326,8 +373,12 @@ public class WelcomingMenu {
 
         if (choice == 1) {
             viewAccounts((Customer) user);
+
         } else if (choice == 2) {
             depositMoney((Customer) user);
+
+        } else if (choice == 3) {
+            withdrawMoney((Customer) user);
         }
 
     }

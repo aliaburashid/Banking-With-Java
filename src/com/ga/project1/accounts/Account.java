@@ -30,7 +30,7 @@ public class Account {
             active = true;
             overdraftCount = 0;
             overdraftFees = 0;
-            System.out.println("Your account has been " + greenBold + "REACTIVATED" + textReset + ".");
+            System.out.println("\nYour account has been " + greenBold + "REACTIVATED" + textReset + ".");
         }
         return accountBalance;
     }
@@ -40,44 +40,44 @@ public class Account {
 
         // validation: preventing negative or 0 transaction amount
         if (amount <= 0) {
-            System.out.println("Withdrawal amount must be greater than $0.");
+            System.out.println("\nWithdrawal amount must be greater than $0.");
             return accountBalance;
         }
 
         // validation: preventing withdrawal from a deactivated account
         if (!active) {
-            System.out.println("Alert: Overdraft limit reached. Your account is " + redBold + "DEACTIVATED" + textReset + ".");
+            System.out.println( redBold + "\nAlert:" + textReset + " Overdraft limit reached. Your account is " + redBold + "DEACTIVATED" + textReset + ".");
             return accountBalance;
         }
 
         // validation: preventing withdrawing more than $100 while account balance is negative
-        if (accountBalance < 0 && amount > 100) {
-            System.out.println("TRANSACTION CAN'T BE COMPLETED! \nYou cannot withdraw more than $100 while your balance is negative :(");
+        if (accountBalance <= 0 && amount > 100) {
+            System.out.println( redBold + "\nTRANSACTION CAN'T BE COMPLETED! \nYou cannot withdraw more than $100 while your balance is 0 or negative :(" + textReset);
             return accountBalance;
         }
 
         // actual withdraw function
         if (accountBalance >= amount) {
             accountBalance = accountBalance - amount;
-            System.out.println("------------------------------------------------");
-            System.out.println("Amount of $" + amount + " successfully withdrew");
-            System.out.println("------------------------------------------------");
+
         } else {
             // if account balance < amount, overdraft happens
             accountBalance = accountBalance - amount;
             accountBalance = accountBalance - OVERDRAFT_FEE;
             overdraftFees = overdraftFees + OVERDRAFT_FEE;
             overdraftCount++;
-            System.out.println("Warning: Running on borrowed funds! A fee of $" + OVERDRAFT_FEE + " Has been applied.");
-            System.out.println("Current Balance: " + accountBalance);
-
-            // first overdraft warning and deactivate account
+            System.out.println("\n-------------------------------------------------------");
+            System.out.println("OVERDRAFT WARNING!");
+            System.out.println("-------------------------------------------------------");
+            System.out.println(redBold + "Alert " + textReset + ": Running on borrowed funds!");
+            System.out.println(redBold +"Overdraft Fee:"  + textReset + " -$" + OVERDRAFT_FEE);
             if (overdraftCount == 1) {
-                System.out.println("Alert: Remaining overdraft limit is '" + redBold + "1" + textReset + "' before your account is deactivated.");
+                System.out.println(redBold + "Alert" + textReset + " : You have" + redBold + " 1" + textReset + " overdraft remaining before your account is deactivated.");
             } else if (overdraftCount >= 2) {
                 active = false;
-                System.out.println("Alert: Overdraft limit reached. Your account is " + redBold + "DEACTIVATED" + textReset + ".");
+                System.out.println("Alert: Overdraft limit reached. Your account is " + redBold + "DEACTIVATED" + textReset + " due to multiple overdrafts." );
             }
+            System.out.println("-------------------------------------------------------");
         }
         return accountBalance;
     }
@@ -105,4 +105,27 @@ public class Account {
         return accountType;
     }
 
+    public int getOverdraftCount() {
+        return overdraftCount;
+    }
+
+    public double getOverdraftFees() {
+        return overdraftFees;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setOverdraftCount(int overdraftCount) {
+        this.overdraftCount = overdraftCount;
+    }
+
+    public void setOverdraftFees(double overdraftFees) {
+        this.overdraftFees = overdraftFees;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 }
