@@ -11,6 +11,8 @@ public class Account {
     public static String textReset = "\u001B[0m";
     public static String redBold = "\u001B[1;31m";
     public static String greenBold = "\u001B[1;32m";
+    // each bank account can have one debit card
+    private DebitCard debitCard;
 
 
     public Account(String accountIban, double accountBalance, String accountType) {
@@ -145,5 +147,15 @@ public class Account {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    // return the debit card connected to this account
+    public DebitCard getDebitCard() {
+        return debitCard;
+    }
+
+    // connect the debit card chosen by the customer to this account
+    public void setDebitCard(DebitCard debitCard) {
+        this.debitCard = debitCard;
     }
 }

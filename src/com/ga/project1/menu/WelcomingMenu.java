@@ -6,6 +6,8 @@ import com.ga.project1.users.User;
 import com.ga.project1.users.Customer;
 import com.ga.project1.users.Banker;
 import com.ga.project1.accounts.Account;
+import com.ga.project1.accounts.DebitCard;
+import java.util.InputMismatchException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
@@ -121,12 +123,12 @@ public class WelcomingMenu {
                 System.out.println("\n" + Account.redBold + "Incorrect Password :( \nFailed attempts: " + wrongAttempts + "/3" + Account.textReset);
             }
         } else {
-            System.out.println("\n" + Account.redBold + " User not found!"  + Account.textReset);
+            System.out.println("\n" + Account.redBold + " User not found!" + Account.textReset);
         }
     }
 
 
-    public void SignUp(){
+    public void SignUp() {
         scanner.nextLine();
         System.out.println("\n==================== Customer Sign Up ====================");
 
@@ -253,7 +255,7 @@ public class WelcomingMenu {
         System.out.println("Temporary Password: " + temporaryPassword);
     }
 
-    public void changeTempPassword (User user) {
+    public void changeTempPassword(User user) {
         scanner.nextLine();
 
         System.out.println("\n==================== Change Password ====================");
@@ -287,7 +289,7 @@ public class WelcomingMenu {
 
         int bankerChoice = scanner.nextInt();
 
-        if (bankerChoice== 1) {
+        if (bankerChoice == 1) {
             addNewCustomer();
         }
     }
@@ -367,8 +369,32 @@ public class WelcomingMenu {
 
             Account account = accountIsFound.get();
 
+            // customer needs a debit card to withdraw
+            if (account.getDebitCard() == null) {
+                System.out.println("\nYou need a debit card before making a withdrawal.");
+                return;
+            }
+
             System.out.print("Enter amount to withdraw: $");
             double amount = scanner.nextDouble();
+
+            // get how much money has already been withdrawn from this account today
+            double todaysWithdrawals = fileHandling.getTodaysTransactionTotal(customer, account.getIban(), "Withdrawal");
+
+            // add the new withdrawal to today's previous withdrawals
+            double totalWithdrawals = todaysWithdrawals + amount;
+
+            // check if the new daily total would go over the debit card limit
+            if (totalWithdrawals > account.getDebitCard().getDailyWithdrawLimit()) {
+                System.out.println(Account.redBold + "\nWithdrawal exceeds your debit card daily limit." + Account.textReset);
+
+                // show the customer their card limit and how much they already withdrew today
+                System.out.println("Daily Withdrawal Limit: $" + account.getDebitCard().getDailyWithdrawLimit());
+
+                System.out.println("Already Withdrawn Today: $" + todaysWithdrawals);
+
+                return;
+            }
 
             // save balance before withdrawing
             double previousBalance = account.getAccountBalance();
@@ -386,7 +412,7 @@ public class WelcomingMenu {
                 fileHandling.saveUser(customer);
 
                 // save the successful withdrawal in the customer's transaction history
-                fileHandling.saveTransaction(customer, "Withdrawal", amount, account.getIban(),  "", account.getAccountBalance());
+                fileHandling.saveTransaction(customer, "Withdrawal", amount, account.getIban(), "", account.getAccountBalance());
 
                 System.out.println("\n-------------------------------------------------------");
                 System.out.println(Account.greenBold + "Withdrawal Completed" + Account.textReset);
@@ -440,9 +466,29 @@ public class WelcomingMenu {
                 Account fromAccount = sourceAccount.get();
                 Account toAccount = destinationAccount.get();
 
+                // check that the account has a debit card
+                if (fromAccount.getDebitCard() == null) {
+                    System.out.println(Account.redBold + "\nYou need a debit card before making a transfer." + Account.textReset);
+                    return;
+                }
+
                 // amount to transfer
                 System.out.println("Enter amount to transfer: $");
                 double amount = scanner.nextDouble();
+
+                // get the total amount already transferred between my accounts today
+                double todaysOwnTransfers = fileHandling.getTodaysTransactionTotal(customer, fromAccount.getIban(), "Transfer Between Own Accounts");
+
+                // add this transfer to the amount already transferred today
+                double totalOwnTransfers = todaysOwnTransfers + amount;
+
+                // check if the new total would go over the cards daily own transfer limit
+                if (totalOwnTransfers > fromAccount.getDebitCard().getDailyOwnTransferLimit()) {
+                    System.out.println(Account.redBold + "\nTransfer exceeds your debit card daily own transfer limit." + Account.textReset);
+                    System.out.println("Daily Own Transfer Limit: $" + fromAccount.getDebitCard().getDailyOwnTransferLimit());
+                    System.out.println("Already Transferred Today: $" + todaysOwnTransfers);
+                    return;
+                }
 
                 // save both balances before the transfer
                 double previousFromBalance = fromAccount.getAccountBalance();
@@ -480,7 +526,7 @@ public class WelcomingMenu {
                     System.out.println("-------------------------------------------------------");
                 }
 
-            } else  {
+            } else {
                 System.out.println(Account.redBold + "One or both accounts were not found." + Account.textReset);
             }
         } else if (choice == 2) {
@@ -526,9 +572,31 @@ public class WelcomingMenu {
                     if (sourceAccount.isPresent()) {
                         // Get my account from the Optional so we can transfer money from it.
                         Account fromAccount = sourceAccount.get();
+
+                        // check that the account has a debit card
+                        if (fromAccount.getDebitCard() == null) {
+                            System.out.println(Account.redBold + "\nYou need a debit card before making a transfer." + Account.textReset);
+                            return;
+                        }
+
                         // ask how much money they want to transfer
                         System.out.print("Enter amount to transfer: $");
                         double amount = scanner.nextDouble();
+
+                        // get the total amount already transferred to other customers today
+                        double todaysTransfers = fileHandling.getTodaysTransactionTotal(customer, fromAccount.getIban(), "Transfer To Another Customer");
+
+                        // add this transfer to the amount already transferred today
+                        double totalTransfers = todaysTransfers + amount;
+
+                        // check if the new total would go over the cards daily transfer limit
+                        if (totalTransfers > fromAccount.getDebitCard().getDailyTransferLimit()) {
+                            System.out.println(Account.redBold + "\nTransfer exceeds your debit card daily transfer limit." + Account.textReset);
+                            System.out.println("Daily Transfer Limit: $" + fromAccount.getDebitCard().getDailyTransferLimit());
+                            System.out.println("Already Transferred Today: $" + todaysTransfers);
+                            return;
+                        }
+
                         // save my balance before the transfer
                         double previousBalance = fromAccount.getAccountBalance();
                         // transfer money from my account to the other customers checking account
@@ -615,7 +683,7 @@ public class WelcomingMenu {
 
                 // for deposit/withdrawal, balance is stored at index 4
                 // example: Date,Type,Amount,Account,Balance
-                 balanceAfter= transactionData[4];
+                balanceAfter = transactionData[4];
 
             } else {
                 // transfers have a source and a destination
@@ -713,41 +781,147 @@ public class WelcomingMenu {
     }
 
 
-    public void customerMenu(User user) {
-        System.out.println("\n==================== Customer Menu ====================");
-        System.out.println("Welcome " + user.getName());
+    public void debitCardMenu(Customer customer) {
+        System.out.println("\n==================== Debit Card ====================");
 
-        System.out.println("1. View Accounts");
-        System.out.println("2. Deposit");
-        System.out.println("3. Withdraw");
-        System.out.println("4. Transfer");
-        System.out.println("5. Transaction History");
-        System.out.println("6. Account Statement");
-        System.out.println("7. Logout");
-
-        System.out.println("Choose an Option: ");
-
-        int choice = scanner.nextInt();
-
-        if (choice == 1) {
-            viewAccounts((Customer) user);
-
-        } else if (choice == 2) {
-            depositMoney((Customer) user);
-
-        } else if (choice == 3) {
-            withdrawMoney((Customer) user);
-
-        } else if (choice == 4) {
-            transferMoney((Customer) user);
-
-        } else if (choice == 5) {
-            viewTransactionHistory((Customer) user);
-
-        } else if (choice == 6) {
-            viewAccountStatement((Customer) user);
+        // gets the customers list of accounts
+        // take one Account at a time from that list and temporarily call it account
+        // show all accounts that belong to this customer
+        for (Account account : customer.getAccounts()) {
+            System.out.println(account.getIban() + " - " + account.getAccountType());
         }
 
+        // ask which account the customer wants to manage a debit card for
+        System.out.println("\nEnter the IBAN of the account:");
+        String iban = scanner.next();
+
+        // search through that customers account for the matching iban
+        // if exists then the Optional contains the account
+        Optional<Account> selectedAccount = customer.getAccount(iban);
+
+        // optional empty? check if the account was not found
+        if (selectedAccount.isEmpty()) {
+            System.out.println("Account not found.");
+            return;
+        }
+
+        // get the account from the Optional
+        Account account = selectedAccount.get();
+
+        // check if this account already has a debit card
+        if (account.getDebitCard() != null) {
+            System.out.println("\nThis account already has a debit card.");
+            System.out.println("Card Type: " + account.getDebitCard().getCardType());
+            return;
+        }
+
+        // this account has no debit card yet, so let the customer choose one
+        System.out.println("\nChoose a Debit Card:");
+        System.out.println("1. Mastercard");
+        System.out.println("2. Mastercard Titanium");
+        System.out.println("3. Mastercard Platinum");
+
+        System.out.println("\nEnter your choice:");
+        int cardChoice = scanner.nextInt();
+
+        // store the card type based on the customers choice
+        String cardType;
+
+        if (cardChoice == 1) {
+            cardType = "Mastercard";
+
+        } else if (cardChoice == 2) {
+            cardType = "Mastercard Titanium";
+
+        } else if (cardChoice == 3) {
+            cardType = "Mastercard Platinum";
+
+        } else {
+            System.out.println("Invalid card choice.");
+            return;
+        }
+
+        // create the debit card using the card type chosen by the customer
+        DebitCard debitCard = new DebitCard(cardType);
+
+        // connect the new debit card to the selected account
+        account.setDebitCard(debitCard);
+
+        // save the customer so the debit card is kept after restarting the program
+        fileHandling.saveUser(customer);
+
+        // confirm that the debit card was successfully added to the account
+        System.out.println("\nDebit card added " + Account.greenBold + "successfully!" + Account.textReset);
+        System.out.println("Card Type: " + debitCard.getCardType());
+        System.out.println("Account:   " + account.getIban());
     }
 
+
+    public void customerMenu(User user) {
+
+        // keep showing the customer menu until the customer chooses to logout
+        while (true) {
+
+            System.out.println("\n==================== Customer Menu ====================");
+            System.out.println("Welcome " + user.getName());
+
+            System.out.println("1. View Accounts");
+            System.out.println("2. Deposit");
+            System.out.println("3. Withdraw");
+            System.out.println("4. Transfer");
+            System.out.println("5. Transaction History");
+            System.out.println("6. Account Statement");
+            System.out.println("7. Debit Card");
+            System.out.println("8. Logout");
+
+            System.out.println("Choose an Option: ");
+
+            int choice;
+
+            try {
+                // try to read the customers menu choice as a number
+                choice = scanner.nextInt();
+
+            } catch (InputMismatchException e) {
+
+                // remove the invalid input from the scanner
+                scanner.nextLine();
+
+                System.out.println(Account.redBold + "Invalid input. Please enter a number from 1 to 8." + Account.textReset);
+
+                // restart the while loop and show the customer menu again
+                continue;
+            }
+
+            if (choice == 1) {
+                viewAccounts((Customer) user);
+
+            } else if (choice == 2) {
+                depositMoney((Customer) user);
+
+            } else if (choice == 3) {
+                withdrawMoney((Customer) user);
+
+            } else if (choice == 4) {
+                transferMoney((Customer) user);
+
+            } else if (choice == 5) {
+                viewTransactionHistory((Customer) user);
+
+            } else if (choice == 6) {
+                viewAccountStatement((Customer) user);
+
+            } else if (choice == 7) {
+                debitCardMenu((Customer) user);
+
+            } else if (choice == 8) {
+                // stop the loop and logout the customer
+                System.out.println("\nLogging out...");
+                break;
+
+            } else {
+                System.out.println("Invalid option. Please try again.");
+            }
+        }
+    }
 }

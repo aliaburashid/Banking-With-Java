@@ -7,5 +7,5 @@ Security Lockout Until=null
 Email=alia@email.com
 Address=Bahrain
 PhoneNumber=12345678
-Account=BH001,Checking,605.0,0,0.0,true
+Account=BH001,Checking,10605.0,0,0.0,true
 Account=BH002,Savings,200.0,0,0.0,true

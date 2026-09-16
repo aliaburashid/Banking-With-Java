@@ -19,6 +19,7 @@ import com.ga.project1.users.Banker;
 import com.ga.project1.users.Customer;
 import com.ga.project1.users.User;
 import com.ga.project1.accounts.Account;
+import com.ga.project1.accounts.DebitCard;
 
 import java.io.File; // deal with directory
 import java.io.FileWriter; // write text into a file
@@ -109,6 +110,14 @@ public class FileHandling {
                             + "," + account.getOverdraftFees()
                             + "," + account.isActive()
                             + "\n");
+
+                    // save the debit card if this account has one
+                    if (account.getDebitCard() != null) {
+                        writer.write("DebitCard="
+                                + account.getIban()
+                                + "," + account.getDebitCard().getCardType()
+                                + "\n");
+                    }
                 }
 
                 // write the customers old transactions back into the file
@@ -164,6 +173,8 @@ public class FileHandling {
 
                         // stores the account lines that are read from the file
                         ArrayList<String> accountLines = new ArrayList<>();
+                        // stores the debit card lines that are read from the file
+                        ArrayList<String> debitCardLines = new ArrayList<>();
 
                         // keep reading while the file has another line
                         while (fileScanner.hasNextLine()) {
@@ -217,6 +228,10 @@ public class FileHandling {
                             } else if (line.startsWith("Account=")) {
                                 // remove "Account=" and save the account information
                                 accountLines.add(line.substring(8));
+
+                            } else if (line.startsWith("DebitCard=")) {
+                                // remove "DebitCard=" and save the debit card information
+                                debitCardLines.add(line.substring("DebitCard=".length()));
                             }
                         }
 
@@ -272,6 +287,22 @@ public class FileHandling {
 
                             // add the account back to the customer
                             customer.addAccount(account);
+                        }
+
+                        // load debit cards
+                        // go through the saved debit cards
+                        for (String debitCardLine : debitCardLines) {
+
+                            // split into the account IBAN and card type
+                            String[] cardData = debitCardLine.split(",");
+
+                            String iban = cardData[0];
+                            String cardType = cardData[1];
+
+                            // find the account and connect its debit card
+                            customer.getAccount(iban).ifPresent(account ->
+                                    account.setDebitCard(new DebitCard(cardType))
+                            );
                         }
 
                         // return the customer with their accounts inside an Optional
@@ -552,6 +583,38 @@ public class FileHandling {
         } catch (IOException e) {
             System.out.println("Error saving transaction.");
         }
+    }
+
+    // calculate how much was spent on one transaction type today from one account
+    public double getTodaysTransactionTotal(Customer customer, String iban, String type) {
+
+        double total = 0;
+
+        // get all saved transactions from the customers file
+        ArrayList<String> transactions = loadTransactions(customer);
+
+        // get todays date
+        String today = LocalDateTime.now().toLocalDate().toString();
+
+        // go through all the customers transactions
+        for (String transaction : transactions) {
+
+            // remove "Transaction=" and split the transaction information
+            String transactionInfo = transaction.substring("Transaction=".length());
+            String[] transactionData = transactionInfo.split(",");
+
+            String date = transactionData[0].substring(0, 10);
+            String transactionType = transactionData[1];
+            String transactionIban = transactionData[3];
+
+            // only count the matching transaction type from this account today
+            if (date.equals(today) && transactionType.equals(type) && transactionIban.equals(iban)) {
+                // add the transaction amount to todays total
+                total = total + Double.parseDouble(transactionData[2]);
+            }
+        }
+
+        return total;
     }
 
 
