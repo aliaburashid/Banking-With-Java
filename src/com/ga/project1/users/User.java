@@ -1,13 +1,13 @@
 package com.ga.project1.users;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public abstract class User {
     private String id;
     private String name;
     private String hashedPassword;
     private int countOfFailedLoginAttempts;
-    private LocalDate securityLockoutUntil;
+    private LocalDateTime securityLockoutUntil;
     private boolean temporaryPassword;
 
     public User(String id, String name, String hashedPassword) {
@@ -43,6 +43,22 @@ public abstract class User {
 
     public void setHashedPassword(String hashedPassword) {
         this.hashedPassword = hashedPassword;
+    }
+
+    public int getCountOfFailedLoginAttempts() {
+        return countOfFailedLoginAttempts;
+    }
+
+    public void setCountOfFailedLoginAttempts(int countOfFailedLoginAttempts) {
+        this.countOfFailedLoginAttempts = countOfFailedLoginAttempts;
+    }
+
+    public LocalDateTime getSecurityLockoutUntil() {
+        return securityLockoutUntil;
+    }
+
+    public void setSecurityLockoutUntil(LocalDateTime securityLockoutUntil) {
+        this.securityLockoutUntil = securityLockoutUntil;
     }
 }
 

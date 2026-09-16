@@ -6,6 +6,8 @@ import com.ga.project1.users.User;
 import com.ga.project1.users.Customer;
 import com.ga.project1.users.Banker;
 import com.ga.project1.accounts.Account;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 import java.util.Optional;
 import java.util.Scanner;
@@ -46,9 +48,6 @@ public class WelcomingMenu {
         System.out.print("Enter your ID: ");
         String id = scanner.nextLine();
 
-        System.out.print("Enter your password: ");
-        String password = scanner.nextLine();
-
         // search for the user using their ID
         Optional<User> loadedUser = fileHandling.loadUser(id);
 
@@ -57,9 +56,34 @@ public class WelcomingMenu {
             // if so then get the user object from the optional
             User user = loadedUser.get();
 
+            // check if the user is still within the 1 minute lock time
+            if (user.getSecurityLockoutUntil() != null && LocalDateTime.now().isBefore(user.getSecurityLockoutUntil())) {
+                System.out.println("\n" + Account.redBold + "Login temporarily disabled for 1 minute due to multiple failed entry attempts." + Account.textReset);
+                return;
+            }
+
+            // if the lockout time has passed, reset the failed attempts
+            if (user.getSecurityLockoutUntil() != null && LocalDateTime.now().isAfter(user.getSecurityLockoutUntil())) {
+                user.setCountOfFailedLoginAttempts(0);
+                user.setSecurityLockoutUntil(null);
+                fileHandling.saveUser(user);
+            }
+
+            // only ask for the password if the user is not locked
+            System.out.print("Enter your password: ");
+            String password = scanner.nextLine();
+
             // check if the entered password is the same as the hashed password
             boolean correctPassword = authentication.checkPassword(password, user.getHashedPassword());
+
             if (correctPassword) {
+                // successful login so reset the failed login attempts
+                user.setCountOfFailedLoginAttempts(0);
+                user.setSecurityLockoutUntil(null);
+
+                // save the reset values to the users file
+                fileHandling.saveUser(user);
+
                 System.out.println("\n" + Account.greenBold + "Login Successfully!" + Account.textReset);
                 System.out.println("Welcome " + user.getName());
 
@@ -80,7 +104,21 @@ public class WelcomingMenu {
                     bankerMenu(banker);
                 }
             } else {
-                System.out.println("\n" + Account.redBold + " Incorrect Password :(" + Account.textReset);
+                // add 1 every time the user enters the wrong password
+                int wrongAttempts = user.getCountOfFailedLoginAttempts() + 1;
+                user.setCountOfFailedLoginAttempts(wrongAttempts);
+
+                // if the user reaches 3 failed attempts, lock their login for 1 minute
+                if (wrongAttempts >= 3) {
+                    // get the current date and time and add one minute
+                    user.setSecurityLockoutUntil(LocalDateTime.now().plusMinutes(1));
+                    System.out.println("\n" + Account.redBold + "Login temporarily disabled for 1 minute due to multiple failed entry attempts." + Account.textReset);
+                }
+
+                // save the updated failed attempts to the users file
+                fileHandling.saveUser(user);
+
+                System.out.println("\n" + Account.redBold + "Incorrect Password :( \nFailed attempts: " + wrongAttempts + "/3" + Account.textReset);
             }
         } else {
             System.out.println("\n" + Account.redBold + " User not found!"  + Account.textReset);
@@ -294,6 +332,9 @@ public class WelcomingMenu {
             // save the customer so the new balance is saved
             fileHandling.saveUser(customer);
 
+            // save the deposit in the customer's transaction history
+            fileHandling.saveTransaction(customer, "Deposit", amount, account.getIban(), "", account.getAccountBalance());
+
             System.out.println("\n-------------------------------------------------------");
             System.out.println(Account.greenBold + "Deposit Successful!" + Account.textReset);
             System.out.println("-------------------------------------------------------");
@@ -338,15 +379,25 @@ public class WelcomingMenu {
             // save the updated account
             fileHandling.saveUser(customer);
 
-            System.out.println("\n-------------------------------------------------------");
-            System.out.println(Account.greenBold + "Withdrawal Completed" + Account.textReset);
-            System.out.println("-------------------------------------------------------");
-            System.out.println("Account:          " + account.getAccountType());
-            System.out.println("Previous Balance: $" + previousBalance);
-            System.out.println("Withdrawal:       -$" + amount);
-            System.out.println("-------------------------------------------------------");
-            System.out.println("New Balance:      $" + account.getAccountBalance());
-            System.out.println("-------------------------------------------------------");
+            // only continue if the balance changed
+            if (account.getAccountBalance() != previousBalance) {
+
+                // save the updated account
+                fileHandling.saveUser(customer);
+
+                // save the successful withdrawal in the customer's transaction history
+                fileHandling.saveTransaction(customer, "Withdrawal", amount, account.getIban(),  "", account.getAccountBalance());
+
+                System.out.println("\n-------------------------------------------------------");
+                System.out.println(Account.greenBold + "Withdrawal Completed" + Account.textReset);
+                System.out.println("-------------------------------------------------------");
+                System.out.println("Account:          " + account.getAccountType());
+                System.out.println("Previous Balance: $" + previousBalance);
+                System.out.println("Withdrawal:       -$" + amount);
+                System.out.println("-------------------------------------------------------");
+                System.out.println("New Balance:      $" + account.getAccountBalance());
+                System.out.println("-------------------------------------------------------");
+            }
 
         } else {
 
@@ -404,6 +455,9 @@ public class WelcomingMenu {
                 if (fromAccount.getAccountBalance() != previousFromBalance) {
 
                     fileHandling.saveUser(customer);
+
+                    // save the successful transfer in the customer's transaction history
+                    fileHandling.saveTransaction(customer, "Transfer Between Own Accounts", amount, fromAccount.getIban(), toAccount.getIban(), fromAccount.getAccountBalance());
 
                     System.out.println("\n-------------------------------------------------------");
                     System.out.println(Account.greenBold + "Transfer Successful!" + Account.textReset);
@@ -487,6 +541,9 @@ public class WelcomingMenu {
                             fileHandling.saveUser(customer);
                             fileHandling.saveUser(destinationCustomer);
 
+                            // save the successful transfer in the senders transaction history
+                            fileHandling.saveTransaction(customer, "Transfer To Another Customer", amount, fromAccount.getIban(), destinationCustomer.getId(), fromAccount.getAccountBalance());
+
                             System.out.println("\n-------------------------------------------------------");
                             System.out.println(Account.greenBold + "Transfer Successful!" + Account.textReset);
                             System.out.println("-------------------------------------------------------");
@@ -510,6 +567,70 @@ public class WelcomingMenu {
             }
 
 
+        }
+    }
+
+
+    public void viewTransactionHistory(Customer customer) {
+        // get this customers saved transactions from their file
+        ArrayList<String> transactions = fileHandling.loadTransactions(customer);
+
+        // check if the customer has no transaction history
+        if (transactions.isEmpty()) {
+            System.out.println("\nNo transactions found.");
+            return;
+        }
+
+        // transaction history heading
+        System.out.println("\n==================== Transaction History ====================");
+        // show which customer the transaction history belongs to
+        System.out.println("\nCustomer: " + customer.getName());
+        System.out.println("Customer ID: " + customer.getId());
+
+        // go through every transaction in the customers transaction history
+        for (String transaction : transactions) {
+            // remove "Transaction=" from the beginning
+            String transactionInfo = transaction.substring("Transaction=".length());
+
+            // split the transaction into separate pieces wherever there is a comma
+            String[] transactionData = transactionInfo.split(",");
+
+            // start with 2026-09-16T14:53:40.066862 and 16 only keeps 2026-09-16T14:53
+            String dateTime = transactionData[0].substring(0, 16).replace("T", " ");
+            String transactionType = transactionData[1];
+            String amount = transactionData[2];
+            String from = transactionData[3];
+            String balanceAfter;
+
+
+            System.out.println("\n-------------------------------------------------------------");
+            // display the basic transaction info
+            System.out.println("Date & Time:   " + dateTime);
+            System.out.println("Type:          " + transactionType);
+            System.out.printf("Amount:        $%.2f%n", Double.parseDouble(amount));
+
+            // deposit and withdrawal only use one account that we deposit and withdraw from
+            if (transactionType.equals("Deposit") || transactionType.equals("Withdrawal")) {
+                System.out.println("Account:       " + from);
+
+                // for deposit/withdrawal, balance is stored at index 4
+                // example: Date,Type,Amount,Account,Balance
+                 balanceAfter= transactionData[4];
+
+            } else {
+                // transfers have a source and a destination
+                // we need to display the destination info
+                String destination = transactionData[4];
+                System.out.println("From:          " + from);
+                System.out.println("To:            " + destination);
+
+                // for transfers, balance is stored at index 5
+                // Date,Type,Amount,From,Destination,Balance
+                balanceAfter = transactionData[5];
+            }
+
+            // show the balance after the transaction was completed
+            System.out.printf("Balance After: $%.2f%n", Double.parseDouble(balanceAfter));
         }
     }
 
@@ -539,6 +660,9 @@ public class WelcomingMenu {
 
         } else if (choice == 4) {
             transferMoney((Customer) user);
+
+        } else if (choice == 5) {
+            viewTransactionHistory((Customer) user);
         }
 
     }

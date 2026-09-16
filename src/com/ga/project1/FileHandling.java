@@ -26,10 +26,14 @@ import java.io.IOException; // error that can happen while working with files
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.time.LocalDateTime;
 
 public class FileHandling {
 
     public void saveUser(User user) {
+
+        // store the customers existing transactions before rewriting their file
+        ArrayList<String> transactionLines = new ArrayList<>();
 
         String role;
         String folder;
@@ -49,8 +53,22 @@ public class FileHandling {
         }
 
         // create the file name using this format
-        String fileName =
-                role + "-" + user.getName() + "-" + user.getId() + ".txt";
+        String fileName = role + "-" + user.getName() + "-" + user.getId() + ".txt";
+
+        // if this is a customer
+        if (user instanceof Customer) {
+
+            // get the customers existing file
+            File oldFile = new File(folder + fileName);
+
+            // only read transactions if the customer already has a file
+            if (oldFile.exists()) {
+
+                // get all the old transaction lines before the file gets rewritten
+                // this prevents the customer's transaction history from being deleted
+                transactionLines = getTransactionLines(oldFile);
+            }
+        }
 
         // creates a File object that represents the folder where the user will be saved
         File directory = new File(folder);
@@ -64,11 +82,14 @@ public class FileHandling {
             // create the user file so we can write info into it
             FileWriter writer = new FileWriter(folder + fileName);
 
-            // user basic info
+            // save user basic info
             writer.write("ID=" + user.getId() + "\n");
             writer.write("Name=" + user.getName() + "\n");
             writer.write("Password=" + user.getHashedPassword() + "\n");
             writer.write("Temporary Password=" + user.isTemporaryPassword()+ "\n");
+            writer.write("Failed Login Attempts=" + user.getCountOfFailedLoginAttempts() + "\n");
+            // save the time the user is locked until
+            writer.write("Security Lockout Until=" + user.getSecurityLockoutUntil() + "\n");
 
             // if the user is a Customer, save their personal details
             if (user instanceof Customer) {
@@ -88,6 +109,11 @@ public class FileHandling {
                             + "," + account.getOverdraftFees()
                             + "," + account.isActive()
                             + "\n");
+                }
+
+                // write the customers old transactions back into the file
+                for (String transactionLine : transactionLines) {
+                    writer.write(transactionLine + "\n");
                 }
             }
 
@@ -130,6 +156,8 @@ public class FileHandling {
                         String name = "";
                         String hashedPassword = "";
                         boolean temporaryPassword = false;
+                        int countOfFailedLoginAttempts = 0;
+                        LocalDateTime securityLockoutUntil = null;
                         String email = "";
                         String address = "";
                         String phoneNumber = "";
@@ -145,42 +173,48 @@ public class FileHandling {
 
                             // check if the line contains the customer ID
                             if (line.startsWith("ID=")) {
-
                                 customerId = line.substring(3);
 
                                 // check if the line contains the customer name
                             } else if (line.startsWith("Name=")) {
-
                                 name = line.substring(5);
 
-                                // check if the line contains the password
+                                // check if the line contains the failed login attempts
                             } else if (line.startsWith("Password=")) {
-
                                 hashedPassword = line.substring(9);
 
                                 // convert the String "true" or "false" into a boolean
-                            } else if (line.startsWith("Temporary Password=")){
+                            } else if (line.startsWith("Temporary Password=")) {
                                 // true is string so we need boolean true
                                 temporaryPassword = Boolean.parseBoolean(line.substring("Temporary Password=".length()));
 
+                            } else if (line.startsWith("Failed Login Attempts=")) {
+                                // get the saved number of failed login attempts from the file
+                                countOfFailedLoginAttempts = Integer.parseInt(line.substring("Failed Login Attempts=".length()));
+
+                                // check if the line contains the security lockout time
+                            } else if (line.startsWith("Security Lockout Until=")) {
+                                String lockoutTime = line.substring("Security Lockout Until=".length());
+
+                                // only convert it to LocalDateTime if the user is actually locked
+                                if (!lockoutTime.equals("null")) {
+                                    securityLockoutUntil = LocalDateTime.parse(lockoutTime);
+                                }
+
                                 // check if the line contains the email
                             } else if (line.startsWith("Email=")) {
-
                                 email = line.substring(6);
 
                                 // check if the line contains the address
                             } else if (line.startsWith("Address=")) {
-
                                 address = line.substring(8);
 
                                 // check if the line contains the phone number
                             } else if (line.startsWith("PhoneNumber=")) {
-
                                 phoneNumber = line.substring(12);
 
                                 // check if the line contains an account
                             } else if (line.startsWith("Account=")) {
-
                                 // remove "Account=" and save the account information
                                 accountLines.add(line.substring(8));
                             }
@@ -192,6 +226,9 @@ public class FileHandling {
                         // create a Customer object using the information that was read from the file
                         Customer customer = new Customer(customerId, name, hashedPassword, email, address, phoneNumber);
                         customer.setTemporaryPassword(temporaryPassword);
+                        customer.setCountOfFailedLoginAttempts(countOfFailedLoginAttempts);
+                        // restore the saved security lockout time
+                        customer.setSecurityLockoutUntil(securityLockoutUntil);
 
                         // go through every account that was read from the file
                         for (String accountLine : accountLines) {
@@ -267,23 +304,35 @@ public class FileHandling {
                         String bankerId = "";
                         String name = "";
                         String hashedPassword = "";
+                        int countOfFailedLoginAttempts = 0;
+                        LocalDateTime securityLockoutUntil = null;
 
                         // keep reading while the file has another line
                         while (fileScanner.hasNextLine()) {
-
                             String line = fileScanner.nextLine();
 
                             if (line.startsWith("ID=")) {
-
                                 bankerId = line.substring(3);
 
                             } else if (line.startsWith("Name=")) {
-
                                 name = line.substring(5);
 
                             } else if (line.startsWith("Password=")) {
-
                                 hashedPassword = line.substring(9);
+
+                            } else if (line.startsWith("Failed Login Attempts=")) {
+                                // get the saved number of failed login attempts from the file
+                                countOfFailedLoginAttempts = Integer.parseInt(line.substring("Failed Login Attempts=".length()));
+
+                                // check if the line contains the security lockout time
+                            } else if (line.startsWith("Security Lockout Until=")) {
+
+                                String lockoutTime = line.substring("Security Lockout Until=".length());
+
+                                // only convert it if the user is actually locked
+                                if (!lockoutTime.equals("null")) {
+                                    securityLockoutUntil = LocalDateTime.parse(lockoutTime);
+                                }
                             }
                         }
 
@@ -296,6 +345,12 @@ public class FileHandling {
                                 name,
                                 hashedPassword
                         );
+
+                        // restore the bankers failed login attempts
+                        banker.setCountOfFailedLoginAttempts(countOfFailedLoginAttempts);
+
+                        // restore the bankers saved security lockout time
+                        banker.setSecurityLockoutUntil(securityLockoutUntil);
 
                         // return the banker
                         return Optional.of(banker);
@@ -381,4 +436,123 @@ public class FileHandling {
         // return the completed id
         return prefix + formattedId;
     }
+
+    // 1. Find the customers file
+    // find the file that belongs to a customer
+    private File findCustomerFile(Customer customer) {
+
+        // get the folder where all customer files are stored
+        File customerFolder = new File("data/customers/");
+
+        // get all customer files
+        File[] customerFiles = customerFolder.listFiles();
+
+        // check that the folder contains files
+        if (customerFiles != null) {
+
+            // go through every customer file
+            for (File file : customerFiles) {
+
+                // find the file using the customer's ID
+                if (file.getName().endsWith("-" + customer.getId() + ".txt")) {
+                    return file;
+                }
+            }
+        }
+
+        // no customer file was found
+        return null;
+    }
+
+
+
+    // 2. Read transaction lines from that file
+    // read and return all transaction lines from a customer file
+    private ArrayList<String> getTransactionLines(File file) {
+
+        // create an empty list where we will store the transactions we find
+        ArrayList<String> transactionLines = new ArrayList<>();
+
+        try {
+
+            // open the customer file so we can read it
+            Scanner fileScanner = new Scanner(file);
+
+            // keep reading until there are no more lines left in the file
+            while (fileScanner.hasNextLine()) {
+
+                // read one line from the customer file
+                String line = fileScanner.nextLine();
+
+                // we only want transaction lines
+                // for example: Transaction=.....
+                if (line.startsWith("Transaction=")) {
+
+                    // add the whole transaction line to our ArrayList
+                    transactionLines.add(line);
+                }
+            }
+
+            // close the Scanner after we finish reading the file
+            fileScanner.close();
+
+        } catch (IOException e) {
+
+            // this runs if there is a problem while reading the file
+            System.out.println("Error reading transactions.");
+        }
+
+        // give back the list of transactions that we found
+        return transactionLines;
+    }
+
+
+    // 3. Load a customers transactions using methods 1 and 2
+    // get all transactions that belong to a customer
+    public ArrayList<String> loadTransactions(Customer customer) {
+
+        // find the file that belongs to this customer by the findCustomerFile() method created
+        File file = findCustomerFile(customer);
+
+        // if there is no file for this customer,
+        // return an empty list because there are no transactions to read
+        if (file == null) {
+            return new ArrayList<>();
+        }
+
+        // read and return all Transaction=.... lines from the customers file
+        // we already created getTransactionLines(), so we do not repeat the Scanner logic
+        return getTransactionLines(file);
+    }
+
+
+    // 4. Save a new transaction
+    // add a transaction to the customer's file
+    public void saveTransaction(Customer customer, String transactionType, double amount, String fromIban, String destination, double balanceAfter) {
+
+        // find this customers existing file
+        File file = findCustomerFile(customer);
+
+        // stop if the customer file was not found
+        if (file == null) {
+            System.out.println("Customer file not found.");
+            return;
+        }
+
+        try {
+
+            // true means append, keeping the same instead of overwriting the file
+            FileWriter writer = new FileWriter(file, true);
+
+            // add the transaction to the customers file
+            writer.write("Transaction=" + LocalDateTime.now() + "," + transactionType + "," + amount + "," + fromIban + "," + destination + "," + balanceAfter + "\n");
+
+            writer.close();
+
+        } catch (IOException e) {
+            System.out.println("Error saving transaction.");
+        }
+    }
+
+
 }

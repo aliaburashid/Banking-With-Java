@@ -1,8 +1,11 @@
 ID=C001
 Name=Alia
 Password=ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f
+Temporary Password=false
+Failed Login Attempts=0
+Security Lockout Until=null
 Email=alia@email.com
 Address=Bahrain
 PhoneNumber=12345678
-Account=BH001,Checking,500.0
-Account=BH002,Savings,200.0
+Account=BH001,Checking,605.0,0,0.0,true
+Account=BH002,Savings,200.0,0,0.0,true
