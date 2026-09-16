@@ -572,7 +572,7 @@ public class WelcomingMenu {
 
 
     public void viewTransactionHistory(Customer customer) {
-        // get this customers saved transactions from their file
+        // get the customers saved transactions from their file
         ArrayList<String> transactions = fileHandling.loadTransactions(customer);
 
         // check if the customer has no transaction history
@@ -634,6 +634,85 @@ public class WelcomingMenu {
         }
     }
 
+
+    // view account statement method
+    public void viewAccountStatement(Customer customer) {
+        System.out.println("\n==================== Account Statement ====================");
+
+        // gets the customers list of accounts
+        // take one Account at a time from that list and temporarily call it account
+        // show all accounts that belong to this customer
+        for (Account account : customer.getAccounts()) {
+            System.out.println(account.getIban() + " - " + account.getAccountType());
+        }
+
+        // ask which account statement the customer wants
+        System.out.println("\nEnter the IBAN of the account:");
+        String iban = scanner.next();
+
+        // search through that customers account for the matching iban
+        // if exists then the Optional contains the account
+        Optional<Account> selectedAccount = customer.getAccount(iban);
+
+        // optional empty? check if the account was not found
+        if (selectedAccount.isEmpty()) {
+            System.out.println("Account not found.");
+            return;
+        }
+
+        // get the account from the Optional
+        Account account = selectedAccount.get();
+
+        // display the selected account info
+        System.out.println("\nAccount Type:    " + account.getAccountType());
+        System.out.println("IBAN:            " + account.getIban());
+        System.out.printf("Total Amount:    $%.2f%n", account.getAccountBalance());
+
+        // get all transactions that belong to this customer
+        ArrayList<String> transactions = fileHandling.loadTransactions(customer);
+
+        // go through each transaction
+        for (String transaction : transactions) {
+            // remove "Transaction=" from the beginning
+            String transactionInfo = transaction.substring("Transaction=".length());
+
+            // split the transaction into separate pieces
+            String[] transactionData = transactionInfo.split(",");
+
+            // get the account iban used in this transaction
+            // example: Date,Type,Amount,Account,Balance
+            String transactionAccount = transactionData[3];
+
+            // the customer can have more than one account
+            // check if the selected account sent the money
+            boolean sentMoney = transactionAccount.equals(account.getIban());
+
+            // check if the selected account received money from their other account
+            boolean receivedMoney = transactionData[1].equals("Transfer Between Own Accounts")
+                    && transactionData[4].equals(account.getIban());
+
+            // show the transaction if the selected account sent or received money
+            if (sentMoney || receivedMoney) {
+                // get the transaction details
+                String dateTime = transactionData[0].substring(0, 16).replace("T", " ");
+                String transactionType = transactionData[1];
+                String amount = transactionData[2];
+
+                // display the transaction in the account statement
+                System.out.println("\n-------------------------------------------------------------");
+                System.out.println("Date & Time:   " + dateTime);
+                System.out.println("Type:          " + transactionType);
+
+                if (receivedMoney) {
+                    System.out.println("Amount:        +$" + amount);
+                } else {
+                    System.out.println("Amount:        -$" + amount);
+                }
+            }
+        }
+    }
+
+
     public void customerMenu(User user) {
         System.out.println("\n==================== Customer Menu ====================");
         System.out.println("Welcome " + user.getName());
@@ -643,7 +722,8 @@ public class WelcomingMenu {
         System.out.println("3. Withdraw");
         System.out.println("4. Transfer");
         System.out.println("5. Transaction History");
-        System.out.println("6. Logout");
+        System.out.println("6. Account Statement");
+        System.out.println("7. Logout");
 
         System.out.println("Choose an Option: ");
 
@@ -663,6 +743,9 @@ public class WelcomingMenu {
 
         } else if (choice == 5) {
             viewTransactionHistory((Customer) user);
+
+        } else if (choice == 6) {
+            viewAccountStatement((Customer) user);
         }
 
     }
