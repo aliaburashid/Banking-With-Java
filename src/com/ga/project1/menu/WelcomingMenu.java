@@ -7,6 +7,9 @@ import com.ga.project1.users.Customer;
 import com.ga.project1.users.Banker;
 import com.ga.project1.accounts.Account;
 import com.ga.project1.accounts.DebitCard;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.InputMismatchException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -643,6 +646,9 @@ public class WelcomingMenu {
         // get the customers saved transactions from their file
         ArrayList<String> transactions = fileHandling.loadTransactions(customer);
 
+        // create another list that will hold the transactions after filtering
+        ArrayList<String> filteredTransactions = new ArrayList<>(transactions);
+
         // check if the customer has no transaction history
         if (transactions.isEmpty()) {
             System.out.println("\nNo transactions found.");
@@ -651,12 +657,147 @@ public class WelcomingMenu {
 
         // transaction history heading
         System.out.println("\n==================== Transaction History ====================");
+
         // show which customer the transaction history belongs to
         System.out.println("\nCustomer: " + customer.getName());
         System.out.println("Customer ID: " + customer.getId());
 
-        // go through every transaction in the customers transaction history
-        for (String transaction : transactions) {
+        // ask the customer how they want to filter their transactions
+        System.out.println("\n==================== Filter Transactions ====================");
+        System.out.println("1. All Transactions");
+        System.out.println("2. Today");
+        System.out.println("3. Yesterday");
+        System.out.println("4. Last 7 Days");
+        System.out.println("5. Last Week");
+        System.out.println("6. Last 30 Days");
+        System.out.println("7. Last Month");
+        System.out.println("8. Specific Date");
+
+        System.out.print("Choose a filter: ");
+        int filterChoice = scanner.nextInt();
+
+        LocalDate specificDate = null;
+
+        // if the customer chose Specific Date
+        if (filterChoice == 8) {
+
+            System.out.print("Enter date (YYYY-MM-DD): ");
+            String enteredDate = scanner.next();
+
+            // convert the date entered by the customer from String to LocalDate
+            specificDate = LocalDate.parse(enteredDate);
+        }
+
+        // get today's date
+        LocalDate today = LocalDate.now();
+
+        // create final variable so it can be used inside the lambda
+        LocalDate finalSpecificDate = specificDate;
+
+        // use a lambda to filter the transactions based on the customers choice
+        // go through every transaction and remove it if it doesn't match the filter I want
+        filteredTransactions.removeIf(transaction -> {
+            // remove "Transaction=" from the beginning
+            String transactionInfo = transaction.substring("Transaction=".length());
+
+            // split the transaction into separate pieces wherever there is a comma
+            String[] transactionData = transactionInfo.split(",");
+
+            // get only the date so we can use it for filtering
+            LocalDate transactionDate = LocalDate.parse(transactionData[0].substring(0, 10));
+
+            // if the customer chose Today
+            if (filterChoice == 2) {
+                // remove transactions that were not made today
+                return !transactionDate.equals(today);
+            }
+
+            // if the customer chose Yesterday
+            if (filterChoice == 3) {
+
+                LocalDate yesterday = today.minusDays(1);
+                // remove transactions that were not made yesterday
+                return !transactionDate.equals(yesterday);
+            }
+
+            // if the customer chose Last 7 Days
+            if (filterChoice == 4) {
+
+                LocalDate sevenDaysAgo = today.minusDays(6);
+                // remove transactions that are older than the last 7 days
+                return transactionDate.isBefore(sevenDaysAgo);
+            }
+
+            // if the customer chose Last Week
+            if (filterChoice == 5) {
+
+                // Last Week means the previous calendar week: Monday to Sunday
+                // Example: if today is Friday Sep 18
+                // this week = Monday Sep 14 to Sunday Sep 20
+                // last week = Monday Sep 7 to Sunday Sep 13
+
+                // find Monday of the current week
+                LocalDate thisMonday = today.with(DayOfWeek.MONDAY);
+
+                // go back one week to find last Monday
+                LocalDate lastMonday = thisMonday.minusWeeks(1);
+
+                // one day before this Monday gives us last Sunday
+                LocalDate lastSunday = thisMonday.minusDays(1);
+
+                // remove transactions outside last Monday to last Sunday
+                return transactionDate.isBefore(lastMonday) || transactionDate.isAfter(lastSunday);
+            }
+
+            // if the customer chose Last 30 Days
+            if (filterChoice == 6) {
+
+                // Last 30 Days means 30 days including today
+                // Example: if today is Sep 17
+                // last 30 days = Aug 19 to Sep 17
+
+                LocalDate thirtyDaysAgo = today.minusDays(29);
+
+                // remove transactions older than the last 30 days
+                return transactionDate.isBefore(thirtyDaysAgo);
+            }
+
+            // if the customer chose Last Month
+            if (filterChoice == 7) {
+
+                // Last Month means the previous calendar month
+                // Example: if today is Sep 17
+                // this month = September
+                // last month = August 1 to August 31
+
+                // Keep the year and month, but change the day to 1
+                LocalDate firstDayThisMonth = today.withDayOfMonth(1);
+
+                // go back one month to get the first day of last month
+                LocalDate firstDayLastMonth = firstDayThisMonth.minusMonths(1);
+
+                // one day before this month started = last day of last month
+                LocalDate lastDayLastMonth = firstDayThisMonth.minusDays(1);
+
+                // remove transactions that are not from last month
+                return transactionDate.isBefore(firstDayLastMonth) || transactionDate.isAfter(lastDayLastMonth);
+            }
+
+            // if the customer chose Specific Date
+            if (filterChoice == 8) {
+
+                // remove transactions that do not match the date entered
+                return !transactionDate.equals(finalSpecificDate);
+            }
+
+            // false means do not remove the transaction
+            // this is used for option 1: All Transactions
+            return false;
+        });
+
+        // go through every transaction left after filtering
+        for (String transaction : filteredTransactions) {
+
             // remove "Transaction=" from the beginning
             String transactionInfo = transaction.substring("Transaction=".length());
 
@@ -683,7 +824,12 @@ public class WelcomingMenu {
 
                 // for deposit/withdrawal, balance is stored at index 4
                 // example: Date,Type,Amount,Account,Balance
-                balanceAfter = transactionData[4];
+                // check where the balance is stored
+                if (transactionData[4].isEmpty()) {
+                    balanceAfter = transactionData[5];
+                } else {
+                    balanceAfter = transactionData[4];
+                }
 
             } else {
                 // transfers have a source and a destination
