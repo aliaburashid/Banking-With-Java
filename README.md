@@ -216,11 +216,8 @@ The Entity Relationship Diagram represents the main structure of the application
 - `WelcomingMenu` controls the command-line menus and connects the application's functionality.
 - `Main` starts the application.
 
-> Add the final ERD image here before submission.
+[View the Banking System ERD](https://lucid.app/lucidchart/3d005848-f3d4-4533-b486-1618a603d109/edit?viewport_loc=-1830%2C-6986%2C6371%2C3970%2CHWEp-vi-RSFO&invitationId=inv_71b05347-744d-46d3-a4e2-3211e8db3bca)
 
-```md
-ERD: [Banking System ERD](https://lucid.app/lucidchart/3d005848-f3d4-4533-b486-1618a603d109/edit?viewport_loc=-1830%2C-6986%2C6371%2C3970%2CHWEp-vi-RSFO&invitationId=inv_71b05347-744d-46d3-a4e2-3211e8db3bca)
-```
 
 ## Planning
 
