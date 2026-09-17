@@ -576,7 +576,7 @@ public class FileHandling {
             FileWriter writer = new FileWriter(file, true);
 
             // add the transaction to the customers file
-            writer.write("Transaction=" + LocalDateTime.now() + "," + transactionType + "," + amount + "," + fromIban + "," + destination  + balanceAfter + "," + "\n");
+            writer.write("Transaction=" + LocalDateTime.now() + "," + transactionType + "," + amount + "," + fromIban + "," + destination  + "," + balanceAfter + "," + "\n");
 
             writer.close();
 

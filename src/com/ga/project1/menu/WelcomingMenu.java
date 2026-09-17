@@ -405,9 +405,6 @@ public class WelcomingMenu {
             // use the withdrawal method already created in Account
             account.withdraw(amount);
 
-            // save the updated account
-            fileHandling.saveUser(customer);
-
             // only continue if the balance changed
             if (account.getAccountBalance() != previousBalance) {
 
