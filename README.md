@@ -246,9 +246,6 @@ Trello: [Banking with Java CLI](https://trello.com/b/te8PsAmC/banking-with-java-
 
 One of my favourite functions is `getAccount()` in the `Customer` class because it combines Java Streams, a lambda expression and Optional. Instead of manually looping through the accounts, it searches for the matching IBAN and safely returns an `Optional<Account>`.
 
-### `getTodaysTransactionTotal()`
-
-I also like `getTodaysTransactionTotal()` because the same method is reused for different daily debit-card limits. It reads the customer's transactions and calculates how much has already been completed for a particular account and transaction type that day.
 
 ## Challenges and Unresolved Issues
 
