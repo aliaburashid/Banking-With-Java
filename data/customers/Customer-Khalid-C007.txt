@@ -1,0 +1,11 @@
+ID=C007
+Name=Khalid
+Password=214c967465d6427960a5d5c8cc7df3c5d762b16c96cde5caf67d06449fd7dd62
+Temporary Password=true
+Failed Login Attempts=0
+Security Lockout Until=null
+Email=khalid@gmail.com
+Address=saar
+PhoneNumber=749376329
+Account=BH00ACME00000000000071,Checking,0.0,0,0.0,true
+Account=BH00ACME00000000000072,Saving,0.0,0,0.0,true

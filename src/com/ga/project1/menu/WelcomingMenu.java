@@ -170,23 +170,8 @@ public class WelcomingMenu {
         // Customer sets up their own password so false
         customer.setTemporaryPassword(false);
 
-        // fictional Bahrain-style IBANs
-        String checkingIban = "BH00ACME0000000000" + customerId.substring(1) + "1";
-        String savingIban = "BH00ACME0000000000" + customerId.substring(1) + "2";
-
-        if (accountChoice == 1) {
-            // checking account created
-            Account checkingAccount = new Account(checkingIban, 0.0, "Checking");
-            customer.addAccount(checkingAccount);
-        } else if (accountChoice == 2) {
-            Account savingAccount = new Account(savingIban, 0.0, "Saving");
-            customer.addAccount(savingAccount);
-        } else if (accountChoice == 3) {
-            Account checkingAccount = new Account(checkingIban, 0.0, "Checking");
-            Account savingAccount = new Account(savingIban, 0.0, "Saving");
-            customer.addAccount(checkingAccount);
-            customer.addAccount(savingAccount);
-        }
+        // create the accounts selected by the customer
+        createAccounts(customer, accountChoice);
 
         // save the new customer to the customer folder
         fileHandling.saveUser(customer);
@@ -231,23 +216,8 @@ public class WelcomingMenu {
         // if the banker created the customer with temporary password
         customer.setTemporaryPassword(true);
 
-        // fictional Bahrain-style IBANs
-        String checkingIban = "BH00ACME0000000000" + customerId.substring(1) + "1";
-        String savingIban = "BH00ACME0000000000" + customerId.substring(1) + "2";
-
-        if (accountChoice == 1) {
-            // checking account created
-            Account checkingAccount = new Account(checkingIban, 0.0, "Checking");
-            customer.addAccount(checkingAccount);
-        } else if (accountChoice == 2) {
-            Account savingAccount = new Account(savingIban, 0.0, "Saving");
-            customer.addAccount(savingAccount);
-        } else if (accountChoice == 3) {
-            Account checkingAccount = new Account(checkingIban, 0.0, "Checking");
-            Account savingAccount = new Account(savingIban, 0.0, "Saving");
-            customer.addAccount(checkingAccount);
-            customer.addAccount(savingAccount);
-        }
+        // create the accounts selected for the customer
+        createAccounts(customer, accountChoice);
 
         // save the new customer to the customer folder
         fileHandling.saveUser(customer);
@@ -256,6 +226,25 @@ public class WelcomingMenu {
         System.out.println("\n" + Account.greenBold + "Customer created successfully!" + Account.textReset);
         System.out.println("Customer ID: " + customerId);
         System.out.println("Temporary Password: " + temporaryPassword);
+    }
+
+    public void createAccounts(Customer customer, int accountChoice) {
+
+        // create the IBANs using the customer's ID
+        // fictional Bahrain-style IBANs
+        String checkingIban = "BH00ACME0000000000" + customer.getId().substring(1) + "1";
+        String savingIban = "BH00ACME0000000000" + customer.getId().substring(1) + "2";
+
+        if (accountChoice == 1) {
+            customer.addAccount(new Account(checkingIban, 0.0, "Checking"));
+
+        } else if (accountChoice == 2) {
+            customer.addAccount(new Account(savingIban, 0.0, "Saving"));
+
+        } else if (accountChoice == 3) {
+            customer.addAccount(new Account(checkingIban, 0.0, "Checking"));
+            customer.addAccount(new Account(savingIban, 0.0, "Saving"));
+        }
     }
 
     public void changeTempPassword(User user) {
@@ -281,26 +270,72 @@ public class WelcomingMenu {
 
 
     public void bankerMenu(Banker banker) {
-        System.out.println("\n==================== Banker Menu ====================");
-        System.out.println("Welcome " + banker.getName());
 
-        System.out.println("1. Add New Customer");
-        System.out.println("2. View Customer");
-        System.out.println("3. Logout");
+        // keep showing the banker menu until the banker chooses to logout
+        while (true) {
 
-        System.out.println("Choose an Option: ");
+            System.out.println("\n==================== Banker Menu ====================");
+            System.out.println("Welcome " + banker.getName());
 
-        int bankerChoice = scanner.nextInt();
+            System.out.println("1. Add New Customer");
+            System.out.println("2. View Customer");
+            System.out.println("3. Logout");
 
-        if (bankerChoice == 1) {
-            addNewCustomer();
+            System.out.println("Choose an Option: ");
+
+            int bankerChoice = scanner.nextInt();
+
+            if (bankerChoice == 1) {
+                addNewCustomer();
+
+            } else if (bankerChoice == 2) {
+                viewCustomer();
+
+            } else if (bankerChoice == 3) {
+                System.out.println("\nLogging out...");
+                break;
+
+            } else {
+                System.out.println("Invalid option. Please try again.");
+            }
+        }
+    }
+
+    public void viewCustomer() {
+
+        System.out.println("\n==================== View Customer ====================");
+
+        System.out.print("Enter Customer ID: ");
+        String customerId = scanner.next();
+
+        // search for the customer using their ID
+        Optional<User> loadedUser = fileHandling.loadUser(customerId);
+
+        // make sure the ID exists and belongs to a Customer
+        if (loadedUser.isPresent() && loadedUser.get() instanceof Customer) {
+
+            Customer customer = (Customer) loadedUser.get();
+
+            System.out.println("\nCustomer ID:   " + customer.getId());
+            System.out.println("Name:          " + customer.getName());
+            System.out.println("Email:         " + customer.getEmail());
+            System.out.println("Address:       " + customer.getAddress());
+            System.out.println("Phone Number:  " + customer.getPhoneNumber());
+
+            System.out.println("\nAccounts:");
+            viewAccounts(customer);
+
+        } else {
+            System.out.println(Account.redBold
+                    + "Customer not found."
+                    + Account.textReset);
         }
     }
 
 
     public void viewAccounts(Customer customer) {
 
-        System.out.println("\n==================== Your Accounts ====================");
+        System.out.println("\n==================== Accounts ====================");
 
         // for every account belonging to this customer,put that account temporarily into the variable account and print its info
         for (Account account : customer.getAccounts()) {
@@ -334,24 +369,28 @@ public class WelcomingMenu {
 
             account.deposit(amount); // deposit method in account
 
-            // save the customer so the new balance is saved
-            fileHandling.saveUser(customer);
+            // only continue if the deposit was successful
+            if (account.getAccountBalance() != previousBalance) {
 
-            // save the deposit in the customer's transaction history
-            fileHandling.saveTransaction(customer, "Deposit", amount, account.getIban(), "", account.getAccountBalance());
+                // save the customer so the new balance is saved
+                fileHandling.saveUser(customer);
 
-            System.out.println("\n-------------------------------------------------------");
-            System.out.println(Account.greenBold + "Deposit Successful!" + Account.textReset);
-            System.out.println("-------------------------------------------------------");
-            System.out.println("Account:          " + account.getAccountType());
-            System.out.println("Previous Balance: $" + previousBalance);
-            System.out.println("Deposit:          +$" + amount);
-            System.out.println("-------------------------------------------------------");
-            System.out.println("New Balance:      $" + account.getAccountBalance());
-            System.out.println("-------------------------------------------------------");
+                // save the deposit in the customer's transaction history
+                fileHandling.saveTransaction(customer, "Deposit", amount, account.getIban(), "", account.getAccountBalance());
 
-        } else {
-            System.out.println(Account.redBold + "Account not found." + Account.textReset);
+                System.out.println("\n-------------------------------------------------------");
+                System.out.println(Account.greenBold + "Deposit Successful!" + Account.textReset);
+                System.out.println("-------------------------------------------------------");
+                System.out.println("Account:          " + account.getAccountType());
+                System.out.println("Previous Balance: $" + previousBalance);
+                System.out.println("Deposit:          +$" + amount);
+                System.out.println("-------------------------------------------------------");
+                System.out.println("New Balance:      $" + account.getAccountBalance());
+                System.out.println("-------------------------------------------------------");
+
+            } else {
+                System.out.println(Account.redBold + "Account not found." + Account.textReset);
+            }
         }
     }
 
@@ -914,7 +953,7 @@ public class WelcomingMenu {
                 System.out.println("Date & Time:   " + dateTime);
                 System.out.println("Type:          " + transactionType);
 
-                if (receivedMoney) {
+                if (transactionType.equals("Deposit") || receivedMoney) {
                     System.out.println("Amount:        +$" + amount);
                 } else {
                     System.out.println("Amount:        -$" + amount);

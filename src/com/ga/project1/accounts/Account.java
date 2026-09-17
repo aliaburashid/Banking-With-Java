@@ -26,7 +26,15 @@ public class Account implements iTransactionActions{
 
     @Override
     public double deposit(double amount) {
+
+        // validation: preventing negative or 0 deposit amount
+        if (amount <= 0) {
+            System.out.println("\nDeposit amount must be greater than $0.");
+            return accountBalance;
+        }
+
         accountBalance = accountBalance + amount;
+
         // reactivate account once negative balance and fees resolved
         if (!active && accountBalance >= 0 ) {
             active = true;

@@ -1,3 +1,6 @@
 ID=B003
 Name=Ali
 Password=39ea8705922d7431ef9820b733ee11fe090e0ee226e510b2ae7f6f6631b9e7b5
+Temporary Password=false
+Failed Login Attempts=0
+Security Lockout Until=null

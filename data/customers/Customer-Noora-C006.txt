@@ -1,0 +1,11 @@
+ID=C006
+Name=Noora
+Password=edd54b3d17cb4dfc804a5103a3c01cf9999a4e7c516a13059aaa0466d5965472
+Temporary Password=false
+Failed Login Attempts=0
+Security Lockout Until=null
+Email=noora@gmail.com
+Address=Muharraq
+PhoneNumber=66773897
+Account=BH00ACME00000000000061,Checking,0.0,0,0.0,true
+Account=BH00ACME00000000000062,Saving,0.0,0,0.0,true
