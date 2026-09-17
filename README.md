@@ -237,12 +237,8 @@ Planning included:
 - Refactoring repeated code and completing documentation.
 
 ### Trello
-
-Add the project Trello board link here:
-
-```text
 Trello: [Banking with Java CLI](https://trello.com/b/te8PsAmC/banking-with-java-cli)
-```
+
 
 ## Favourite Functions
 
