@@ -1,6 +1,6 @@
 package com.ga.project1.accounts;
 
-public class Account {
+public class Account implements iTransactionActions{
     private String iban;
     private double accountBalance;
     private String accountType;
@@ -24,7 +24,7 @@ public class Account {
         this.active = true;
     }
 
-
+    @Override
     public double deposit(double amount) {
         accountBalance = accountBalance + amount;
         // reactivate account once negative balance and fees resolved
@@ -37,7 +37,7 @@ public class Account {
         return accountBalance;
     }
 
-
+    @Override
     public double withdraw(double amount) {
 
         // validation: preventing negative or 0 transaction amount
@@ -84,6 +84,7 @@ public class Account {
         return accountBalance;
     }
 
+    @Override
     public double transfer(Account destination, double amount) {
 
         // validation: prevent negative or 0 transfer amount
