@@ -244,7 +244,15 @@ Trello: [Banking with Java CLI](https://trello.com/b/te8PsAmC/banking-with-java-
 
 ### `getAccount()`
 
-One of my favourite functions is `getAccount()` in the `Customer` class because it combines Java Streams, a lambda expression and Optional. Instead of manually looping through the accounts, it searches for the matching IBAN and safely returns an `Optional<Account>`.
+## Favourite Part
+
+My favourite part of the project was implementing the temporary password feature.
+
+When a banker creates a new customer, the system generates a temporary password and stores its hashed version rather than the plain password. When the customer logs in using the temporary password, they are required to create a new password for security purposes.
+
+The new password is stored in a variable, hashed using SHA-256, and then replaces the previous password hash. Finally, `temporaryPassword` is changed to `false` and the updated customer is saved.
+
+I enjoyed this feature because it helped me understand how authentication, password hashing, objects, and file handling can work together in one process.
 
 
 ## Challenges and Unresolved Issues
